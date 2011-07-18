@@ -33,6 +33,4 @@ describe MyServer do
     		s.recv(10).should == 'haha'
     	end
 	end
-	
-	
 end

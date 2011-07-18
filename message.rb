@@ -89,7 +89,7 @@ require 'cstruct'
 #     字段名    类型   长度      备注
 #     Desk_ID   SHORT  桌子号
 #     SMALL     INT    最小金额
-#     BIG       INT    最大金额
+#     MAX       INT    最大金额
 #     Client_ID BYTE             客户端序号, 2人的话，就是1和2
 # 
 # ### 下发牌请求 (服务器->客户端)
@@ -100,7 +100,7 @@ require 'cstruct'
 #     SHOW_CLINET_ID      BYTE         本次该谁出牌
 #     DESKTOP_MONEY       INT          桌子上押的金额
 #     Client1_ID          BYTE         客户端1的ID
-#     Client1_HIDE_POKER  BYTE         参见牌定义，此字段只有第一次下发才有值
+#     Client1_HIDE_POKER  BYTE         参见牌定义，第一次下且对应client_id才有值
 #     Client1_POKER_CODE  BYTE         参见牌定义
 #     Client1_POST_MONEY  INT          已押注
 #     Client1_LAST_MONEY  INT          本次剩余金额
@@ -138,19 +138,24 @@ require 'cstruct'
 #     Client_ID        BYTE        回复你的ID
 #
 module Message
-class MessageHeader < CStruct
-  options :endian => :big
-  uint32:total_length
-  uint16:command_id
-  uint32:sequence_id
-  uint8:status
-  
-  def print
-    msg_header.data.bytes do |c|
-        print '\x',c.to_s(16)
+  class Header < CStruct
+    options :endian => :big
+    uint32:total_length
+    uint16:command_id
+    uint32:sequence_id
+    uint8:status
+    
+    def print
+      msg_header.data.bytes do |c|
+          print '\x',c.to_s(16)
+      end
     end
   end
-end
+
+  class Login < CStruct
+    options :endian => :big
+    
+  end
 
 end
 
