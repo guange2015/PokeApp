@@ -90,24 +90,24 @@ require 'cstruct'
 # -The RubyGems Team
 
 ##
-# 消息定义文件
+# ##消息定义文件##
 #
-# == 消息结结构
+# ###消息结结构###
 #
 # 一个完整的消息体包括两个部分
 # * 消息头 (Message Header)
 # * 消息体 (Message Body)
 #
-# == 字段定义
-# <table>
-# <tr><td>字段名</td>	 <td>长度</td></tr>
-# <tr><td>INT</td>	 <td>4字节</td></tr>
-# <tr><td>SHORT</td>	 <td>2字节</td></tr>
-# <tr><td>BYTE</td>	 <td>1字节</td></tr>
-# <tr><td>STRING</td>	 <td>不定长</td></tr>
-# <tr><td>LONG</td>	 <td>8字节</td></tr>
-# </table>
-
+# ###字段定义###
+# 
+#    * *INT*    :    长度4字节
+#    * *SHORT*  :    长度2字节
+# * *BYTE*   :    长度1字节
+# * *LONG*   :    长度8字节
+# * *STRING* :    不定长,具体值在文档中有描述
+# [cat]
+# [+cat+]
+# [url](http://sinolog.it)
 module Message
   # creates an Addrinfo object from the arguments.
   #
@@ -130,6 +130,7 @@ class MessageHeader < CStruct
         print '\x',c.to_s(16)
     end
   end
+
 end
 
 end
