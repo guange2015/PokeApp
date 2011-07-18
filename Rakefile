@@ -4,6 +4,10 @@ require 'yard'
 require 'yard/rake/yardoc_task'
 
 
+require 'yard/rake/yardoc_task'
+require 'yard'
+
+
 RSpec::Core::RakeTask.new do |t|
     t.rspec_opts = ["--color", "--format", "d"]
     t.pattern = "test/*_spec.rb"
@@ -23,4 +27,7 @@ end
 task :default => [:spec]
 
 
-
+YARD::Rake::YardocTask.new do |t|
+  t.files   = ['**/*.rb', '*.rb']   # optional
+  t.options = ['--markup','markdown'] # optional
+end
