@@ -79,65 +79,31 @@ require 'cstruct'
 # 消息交互
 # --------
 # 
-# ### 客户端登陆-请求
+# {include:Message::Login} 
 # 
-#     字段名 类型    长度  备注
-#     IMEI   STRING  15  
+# {include:Message::LoginRep}
 # 
-# ### 客户端登陆-回应
-# 
-#     字段名    类型   长度      备注
-#     Desk_ID   SHORT  桌子号
-#     SMALL     INT    最小金额
-#     MAX       INT    最大金额
-#     Client_ID BYTE             客户端序号, 2人的话，就是1和2
-# 
-# ### 下发牌请求 (服务器->客户端)
-# 
-#     字段名              类型  长度   备注
-#     Client_Count        BYTE         客户端个数,一般为2
-#     YOU_CLIENT_ID       BYTE         你的CLIENT_ID
-#     SHOW_CLINET_ID      BYTE         本次该谁出牌
-#     DESKTOP_MONEY       INT          桌子上押的金额
-#     Client1_ID          BYTE         客户端1的ID
-#     Client1_HIDE_POKER  BYTE         参见牌定义，第一次下且对应client_id才有值
-#     Client1_POKER_CODE  BYTE         参见牌定义
-#     Client1_POST_MONEY  INT          已押注
-#     Client1_LAST_MONEY  INT          本次剩余金额
-#     此处是重复Client1,有几次重复应该根据Client_Count来判断
+# {include:Message::PushPoke}
 #
-# ### 下发牌回应(客户端->服务器)
-# 
-#     字段名              类型  长度  备注
-#     Client_ID           BYTE    
-# 
-# ### 跟注状态上传(客户端->服务器)
-# 
-#     字段名      类型  长度  备注
-#     Client_ID   BYTE    
-#     Rep_Status  BYTE        跟注状态
-#     Money       INT         跟多少金额，主要是为了获取加注数
+# {include:Message::PushPokeRep}
 #
-## ### 跟注状态回应(服务器->客户端)
-# 
-#     字段名      类型  长度  备注
-#     Client_ID   BYTE    
+# {include:Message::PushStatus}
 #
+# {include:Message::PushStatusRep}
 #
-## ### 广播跟注状态(服务器->客户端)
-# 
-#     字段名           类型  长度   备注
-#     Client_ID        BYTE    
-#     Rep_Status       BYTE         跟注状态
-#     Money            INT          跟多少金额，主要是为了获取加注数
-#     CAN_Rep_Status   BYTE         当前能够使用的状态
+# {include:Message::BroadcastStatus}
 #
-## ### 回应广播跟注状态(客户端->服务器)
-# 
-#     字段名           类型  长度  备注
-#     Client_ID        BYTE        回复你的ID
+# {include:Message::BroadcastStatusRep}
 #
 module Message
+
+# ### 消息头
+#
+#     字段名        中文名     类型  备注
+#     Total_Length  包长度     INT 
+#     Command_ID    消息类型   SHORT 
+#     Sequence_ID   消息流水   INT   交互所产生的序号,连接不断就不变
+#     STATUS        状态       BYTE  状态
   class Header < CStruct
     options :endian => :big
     uint32:total_length
@@ -152,10 +118,109 @@ module Message
     end
   end
 
+# @author Full Name
+# ### 客户端登陆-请求
+# 
+#     字段名 类型    长度  备注
+#     IMEI   STRING  15  
   class Login < CStruct
     options :endian => :big
-    
+    uchar :imei, [16] #本来应该定15位的,但末尾有一位为0
   end
 
+# ### 客户端登陆-回应
+# 
+#     字段名    类型   长度      备注
+#     Desk_ID   SHORT  桌子号
+#     SMALL     INT    最小金额
+#     MAX       INT    最大金额
+#     Client_ID BYTE             客户端序号, 2人的话，就是1和2
+  class LoginRep < CStruct
+    options :endian => :big
+    uint16 :desk_id 
+    uint32 :small
+    uint32 :max
+    uchar  :client_id
+  end
+
+# ### 下发牌请求 (服务器->客户端)
+# 
+#     字段名              类型  长度   备注
+#     Client_Count        BYTE         客户端个数,一般为2
+#     YOU_CLIENT_ID       BYTE         你的CLIENT_ID
+#     SHOW_CLINET_ID      BYTE         本次该谁出牌
+#     DESKTOP_MONEY       INT          桌子上押的金额
+#     Client1_ID          BYTE         客户端1的ID
+#     Client1_HIDE_POKER  BYTE         参见牌定义，第一次下且对应client_id才有值
+#     Client1_POKER_CODE  BYTE         参见牌定义
+#     Client1_POST_MONEY  INT          已押注
+#     Client1_LAST_MONEY  INT          本次剩余金额
+#     此处是重复Client1,有几次重复应该根据Client_Count来判断
+  class PushPoke < CStruct
+    options :endian => :big
+    uchar:client_count
+    uchar:you_client_id     
+    uchar:show_clinet_id    
+    uint32:desktop_money     
+    uchar:client1_id        
+    uchar:client1_hide_poker
+    uchar:client1_poker_code
+    uint32:client1_post_money
+    uint32:client1_last_money
+  end
+# ### 下发牌回应(客户端->服务器)
+# 
+#     字段名              类型  长度  备注
+#     Client_ID           BYTE    
+  class PushPokeRep < CStruct
+    options :endian => :big
+    uchar  :client_id
+  end
+
+# ### 跟注状态上传(客户端->服务器)
+# 
+#     字段名      类型  长度  备注
+#     Client_ID   BYTE    
+#     Rep_Status  BYTE        跟注状态
+#     Money       INT         跟多少金额，主要是为了获取加注数
+  class PushStatus < CStruct
+    options :endian => :big
+    uchar:client_id 
+    uchar:rep_status
+    uint32:money     
+  end
+
+## ### 跟注状态回应(服务器->客户端)
+# 
+#     字段名      类型  长度  备注
+#     Client_ID   BYTE    
+  class PushStatusRep < CStruct
+    options :endian => :big
+    uchar  :client_id
+  end
+
+## ### 广播跟注状态(服务器->客户端)
+# 
+#     字段名           类型  长度   备注
+#     Client_ID        BYTE    
+#     Rep_Status       BYTE         跟注状态
+#     Money            INT          跟多少金额，主要是为了获取加注数
+#     CAN_Rep_Status   BYTE         当前能够使用的状态
+  class BroadcastStatus < CStruct
+    options :endian => :big
+    uchar:client_id     
+    uchar:rep_status    
+    uint32:money         
+    uchar:can_rep_status
+  end
+
+## ### 回应广播跟注状态(客户端->服务器)
+# 
+#     字段名           类型  长度  备注
+#     Client_ID        BYTE        回复你的ID
+  class BroadcastStatusRep < CStruct
+    options :endian => :big
+    uchar  :client_id
+  end
 end
 

@@ -22,8 +22,8 @@ describe Message do
             msg_login = Message::Login.new {|m|
                 m.imei = "123456789012345"
             }
-            msg_login.data.length.should == 15
-            msg_login.data.should == "123456789012345"
+            msg_login.imei.to_cstr.length.should == 15
+            msg_login.imei.to_cstr.should == "123456789012345"
         end
         it "客户端登陆-回应" do
             msg_login_rep = Message::LoginRep.new {|m|
@@ -33,7 +33,7 @@ describe Message do
                 m.client_id = 0x1
             }
             msg_login_rep.data.length.should == 11
-            msg_login_rep.data.should == "\0\1\0\0\1\0\0\2\0\0\1"
+            msg_login_rep.data.should == "\x00\x01\x00\x00\x00\x10\x00\x00\x02\x00\x01"
         end
     end
 
@@ -56,7 +56,7 @@ describe Message do
                 m.client_id = 0x1
             }
             msg_push_poke_rep.data.length.should == 1
-            msg_push_poke_req.data.should == '\1'
+            msg_push_poke_rep.data.should == "\1"
         end
     end
 
@@ -75,7 +75,7 @@ describe Message do
                 m.client_id = 0x1
             }
             msg_push_status_rep.data.length.should == 1
-            msg_push_status_req.data.should == '\1'
+            msg_push_status_rep.data.should == "\1"
         end
     end
 
@@ -96,7 +96,7 @@ describe Message do
                 m.client_id = 0x1
             }
             msg_broadcast_status_rep.data.length.should == 1
-            msg_broadcast_status_req.data.should == '\1'
+            msg_broadcast_status_rep.data.should == "\1"
         end
     end
 
