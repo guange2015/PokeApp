@@ -15,9 +15,7 @@ class MyServer
 	def start		
 		while (session = @@server.accept)
 			Thread.new(session) do |client|
-				@logger.debug client.addr
-				s = client.recv(1024)
-				client.send(s,0) if s.length > 0
+				MyProcess.process(client)
 			end
 			@logger.debug 'server listen' 
 		end		

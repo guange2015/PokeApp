@@ -45,18 +45,7 @@ require 'cstruct'
 #     全押:  0x4
 #     加注:  0x8
 # 
-# ### 消息类型(Command_ID):
-#
-#     消息              字段名                    值 
-#     登陆              WIN_LOGIN                 0x1
-#     回应登陆          WIN_LOGIN_REP             0x801
-#     下发牌请求        WIN_PUSH_POKE             0x2
-#     下发牌回复        WIN_PUSH_POKE_REP         0x802
-#     上传跟注状态      WIN_PUSH_STATUS           0x3
-#     回应跟注状态      WIN_PUSH_STATUS_REP       0x803
-#     广播跟注状态      WIN_BROADCAST_STATUS      0x4
-#     回应广播跟注状态  WIN_BROADCAST_STATUS_REP  0x804
-#
+# {include:Message::Command_ID}
 # ### 牌定义:
 #
 #     1 黑桃8   8   红桃8   15  梅花8   22  方块8
@@ -67,17 +56,13 @@ require 'cstruct'
 #     6 黑桃K   13  红桃K   20  梅花K   27  方块K
 #     7 黑桃A   14  红桃A   21  梅花A   28  方块A
 #
-# ### 状态 STATUS
-# 
-#     成功    :  0
-#     认证错误:  1
-#     其他错误:  9
-#     桌子已满:  2
-#     参数错误:  3
+# {include:Message:ErrorCode}
 #
 #
 # 消息交互
 # --------
+#
+# {include:Message::Error} 
 # 
 # {include:Message::Login} 
 # 
@@ -96,6 +81,47 @@ require 'cstruct'
 # {include:Message::BroadcastStatusRep}
 #
 module Message
+
+# ### 消息类型(Command_ID):
+#
+#     消息              字段名                    值 
+#     登陆              WIN_LOGIN                 0x1
+#     回应登陆          WIN_LOGIN_REP             0x801
+#     下发牌请求        WIN_PUSH_POKE             0x2
+#     下发牌回复        WIN_PUSH_POKE_REP         0x802
+#     上传跟注状态      WIN_PUSH_STATUS           0x3
+#     回应跟注状态      WIN_PUSH_STATUS_REP       0x803
+#     广播跟注状态      WIN_BROADCAST_STATUS      0x4
+#     回应广播跟注状态  WIN_BROADCAST_STATUS_REP  0x804
+#     统一出错处理      WIN_ERROR                 0x9
+#
+  class Command_ID
+    WIN_LOGIN                 = 0x1
+    WIN_LOGIN_REP             = 0x801
+    WIN_PUSH_POKE             = 0x2
+    WIN_PUSH_POKE_REP         = 0x802
+    WIN_PUSH_STATUS           = 0x3
+    WIN_PUSH_STATUS_REP       = 0x803
+    WIN_BROADCAST_STATUS      = 0x4
+    WIN_BROADCAST_STATUS_REP  = 0x804
+    WIN_ERROR                 = 0x9
+  end
+
+# ### 状态 STATUS
+# 
+#     成功    :  0
+#     认证错误:  1
+#     其他错误:  9
+#     桌子已满:  2
+#     参数错误:  3
+#
+  class ErrorCode
+    SUCCESS     = 0x0
+    AUTHFAIL    = 0x1
+    UNKNOWN     = 0x9
+    DESKFULL    = 0x2
+    ARGMENTFAIL = 0x3
+  end
 
 # ### 消息头
 #
@@ -118,13 +144,22 @@ module Message
     end
   end
 
+# ### 统一出错消息包
+#
+#     只包含消息头
+  class Error < CStruct
+    options :endian => :big
+    Header :header
+  end
+
 # @author Full Name
 # ### 客户端登陆-请求
 # 
 #     字段名 类型    长度  备注
-#     IMEI   STRING  15  
+#     IMEI   STRING  16    最后以0结尾
   class Login < CStruct
     options :endian => :big
+    Header :header
     uchar :imei, [16] #本来应该定15位的,但末尾有一位为0
   end
 
@@ -137,6 +172,7 @@ module Message
 #     Client_ID BYTE             客户端序号, 2人的话，就是1和2
   class LoginRep < CStruct
     options :endian => :big
+    Header :header
     uint16 :desk_id 
     uint32 :small
     uint32 :max
@@ -158,15 +194,22 @@ module Message
 #     此处是重复Client1,有几次重复应该根据Client_Count来判断
   class PushPoke < CStruct
     options :endian => :big
+    Header :header
     uchar:client_count
     uchar:you_client_id     
     uchar:show_clinet_id    
-    uint32:desktop_money     
-    uchar:client1_id        
-    uchar:client1_hide_poker
-    uchar:client1_poker_code
-    uint32:client1_post_money
-    uint32:client1_last_money
+    uint32:desktop_money   
+    
+    class PushPokeClient <CStruct
+      options :endian => :big
+      uchar :id        
+      uchar :hide_poker
+      uchar :poker_code
+      uint32:post_money
+      uint32:last_money
+    end  
+
+    PushPokeClient :client, [2]
   end
 # ### 下发牌回应(客户端->服务器)
 # 
@@ -174,6 +217,7 @@ module Message
 #     Client_ID           BYTE    
   class PushPokeRep < CStruct
     options :endian => :big
+    Header :header
     uchar  :client_id
   end
 
@@ -185,6 +229,7 @@ module Message
 #     Money       INT         跟多少金额，主要是为了获取加注数
   class PushStatus < CStruct
     options :endian => :big
+    Header :header
     uchar:client_id 
     uchar:rep_status
     uint32:money     
@@ -196,6 +241,7 @@ module Message
 #     Client_ID   BYTE    
   class PushStatusRep < CStruct
     options :endian => :big
+    Header :header
     uchar  :client_id
   end
 
@@ -208,6 +254,7 @@ module Message
 #     CAN_Rep_Status   BYTE         当前能够使用的状态
   class BroadcastStatus < CStruct
     options :endian => :big
+    Header :header
     uchar:client_id     
     uchar:rep_status    
     uint32:money         
@@ -220,6 +267,7 @@ module Message
 #     Client_ID        BYTE        回复你的ID
   class BroadcastStatusRep < CStruct
     options :endian => :big
+    Header :header
     uchar  :client_id
   end
 end
