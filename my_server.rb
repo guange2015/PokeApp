@@ -4,6 +4,7 @@ require 'socket'
 
 $LOAD_PATH <<  File.expand_path('../',__FILE__)
 require 'my_logger'
+require 'my_process'
 
 class MyServer
 	def initialize
@@ -15,7 +16,14 @@ class MyServer
 	def start		
 		while (session = @@server.accept)
 			Thread.new(session) do |client|
-				MyProcess.process(client)
+				begin
+					MyProcess.new.process client
+				rescue => e
+					@logger.error e.message  
+  					@logger.error e.backtrace.inspect 	
+				ensure				
+					client.close
+				end
 			end
 			@logger.debug 'server listen' 
 		end		

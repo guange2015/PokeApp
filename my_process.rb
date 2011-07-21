@@ -19,25 +19,38 @@ class MyProcess
 		o << content
 		o
 	end
+
+	def get_another_client
+		#todo
+	end
+
 	# Handles a request
     # @param [client] 线程socket
     # @return 没有返回，一直长连接
 	def process(client)
 		# 1. 处理登陆且确定桌子
 		# 2. 下发第一和第二张牌
-		msg_login     = self.recv(client,Message::Login)
-		msg_login_rep = self.login(msg_login)
-		client.send(msg_login_rep.data,0)
+		@client = client
+		msg_login_rep = login
 
 		#这里应该确定双方，才进行发牌
-		@desk = Desk.new(client,get_another_client)
-		self.push_poke(client)
+		@desk ||= Message::Desk.new(client,get_another_client)
+		@desk.reset #重新取牌 
+
+		push_poke(1)
 	end
 
-	def self.login(msg_login)
-			if msg_login.header.command_id == Message::Command_ID::WIN_LOGIN \
-			&& msg_login.imei.to_cstr.length == 15
-			return Message::LoginRep.new {|m|
+	def initialize
+		@desk = nil
+		@client = nil
+	end
+
+	def login
+		msg_login     = MyProcess.recv(@client,Message::Login)
+		msg_login_rep = nil
+		if msg_login.header.command_id == Message::Command_ID::WIN_LOGIN \
+		&& msg_login.imei.to_cstr.length == 15
+			msg_login_rep = Message::LoginRep.new {|m|
 				m.header.command_id   = Message::Command_ID::WIN_LOGIN_REP
 				m.header.status       = 0
 				m.desk_id             = 0x1
@@ -46,17 +59,18 @@ class MyProcess
 				m.client_id           = 0x1 #目前对方全为robot,所以client_id全为1
 				m.header.total_length = Message::LoginRep.size
 			}
-		end
-
-		return Message::Error.new {|m|
+		else
+			msg_login_rep = Message::Error.new {|m|
 				m.header.command_id   = Message::Command_ID::WIN_ERROR
 				m.header.status       = Message::ErrorCode::ARGMENTFAIL
 				m.header.total_length = Message::LoginRep.size
 			}
+		end
+
+		@client.send(msg_login_rep.data,0)
 	end 
 	
-	def self.push_poke(client)	
-		p client
+	def push_poke(seq)	
 		msg_push_poke = Message::PushPoke.new{|m|
 			m.header.command_id   = Message::Command_ID::WIN_PUSH_POKE
 			m.header.status       = 0
@@ -66,12 +80,14 @@ class MyProcess
 			m.you_client_id = 1
 			m.desktop_money = 20
 
-			m.client[0].hide_poker = 5
-			m.client[0].poker_code = 11
+			if seq == 1
+				m.client[0].hide_poker = @desk.poke.client1_codes[seq]
+			else
+				m.client[0].hide_poker = 0
+			end
+			m.client[0].poker_code = @desk.poke.client1_codes[seq]
 		} 
-		p 'send data'
-		client.send(msg_push_poke.data,0)
-
+		@client.send(msg_push_poke.data,0)
 	end
 
 	def self.push_status(msg_push_status)
@@ -79,4 +95,8 @@ class MyProcess
 
 	def self.boradcast_status(msg_boradcast_status)
 	end
+end
+
+if __FILE__ == $0
+	p Message::Desk.new
 end

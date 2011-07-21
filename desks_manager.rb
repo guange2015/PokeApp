@@ -18,7 +18,7 @@ class DesksManager
 
 	# 根据socket号进行查找
 	def find_by_socket(s)
-		@desks.find {|desk| desk.socket.include? s}
+		@desks.find {|desk| desk.sockets.include? s}
 	end
 
 	def <<(arg)

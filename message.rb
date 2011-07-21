@@ -1,6 +1,10 @@
 # coding=utf-8
 require 'cstruct'
 
+
+$desktop_id = 1
+
+def get_desk_id_seq; $desktop_id += 1; end
 ##
 # 消息定义文件
 # =====================
@@ -181,9 +185,7 @@ class Poke
 
 end
 
-DESKTOP_ID_SEQ = 1
 
-def get_desk_id_seq; DESKTOP_ID_SEQ += 1; end
 # ### 桌子结构 Desk
 #
 class Desk
@@ -366,9 +368,6 @@ end
   end
 end
 
-if __FILE__ == $0
-  poke = Message::Poke.new
-  p poke.client1_codes
-  p poke.client2_codes
-  puts poke.to_s
+if __FILE__ == $0  
+  p get_desk_id_seq()
 end
