@@ -53,7 +53,7 @@ describe Message do
             msg_push_poke = Message::PushPoke.new { |m|
                 m.client_count        =  0x2
                 m.you_client_id       =  0x1
-                m.show_clinet_id      =  0x1
+                m.show_client_id      =  0x1
                 m.desktop_money       =  0x20
                 m.client[0].id          =  0x1
                 m.client[0].hide_poker  =  0x8

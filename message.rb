@@ -46,15 +46,8 @@ require 'cstruct'
 #     加注:  0x8
 # 
 # {include:Message::Command_ID}
-# ### 牌定义:
 #
-#     1 黑桃8   8   红桃8   15  梅花8   22  方块8
-#     2 黑桃9   9   红桃9   16  梅花9   23  方块9
-#     3 黑桃10  10  红桃10  17  梅花10  24  方块10
-#     4 黑桃J   11  红桃J   18  梅花J   25  方块J
-#     5 黑桃Q   12  红桃Q   19  梅花Q   26  方块Q
-#     6 黑桃K   13  红桃K   20  梅花K   27  方块K
-#     7 黑桃A   14  红桃A   21  梅花A   28  方块A
+# {include:Message::Poke}
 #
 # {include:Message:ErrorCode}
 #
@@ -106,6 +99,107 @@ module Message
     WIN_BROADCAST_STATUS_REP  = 0x804
     WIN_ERROR                 = 0x9
   end
+
+# ### 牌定义:
+#
+#     1 黑桃8   8   红桃8   15  梅花8   22  方块8
+#     2 黑桃9   9   红桃9   16  梅花9   23  方块9
+#     3 黑桃10  10  红桃10  17  梅花10  24  方块10
+#     4 黑桃J   11  红桃J   18  梅花J   25  方块J
+#     5 黑桃Q   12  红桃Q   19  梅花Q   26  方块Q
+#     6 黑桃K   13  红桃K   20  梅花K   27  方块K
+#     7 黑桃A   14  红桃A   21  梅花A   28  方块A
+#
+class Poke
+  PokeCode = {
+    1  => :A8,
+    2  => :A9,
+    3  => :A10,
+    4  => :AJ,
+    5  => :AQ,
+    6  => :AK,
+    7  => :AA,
+    8  => :B8,
+    9  => :B9,
+    10 => :B10,
+    11 => :BJ,
+    12 => :BQ,
+    13 => :BK,
+    14 => :BA,
+    15 => :C8,
+    16 => :C9,
+    17 => :C10,
+    18 => :CJ ,   
+    19 => :CQ ,  
+    20 => :CK ,  
+    21 => :CA ,   
+    22 => :D8 ,   
+    23 => :D9 ,   
+    24 => :D10,    
+    25 => :DJ ,  
+    26 => :DQ ,   
+    27 => :DK ,   
+    28 => :DA
+  }
+
+  def initialize()
+    reset
+  end
+
+  def reset
+    @client1_codes = []    
+    @client2_codes = []   
+    5.times do |n|
+       get_next_code(@client1_codes)
+       get_next_code(@client2_codes)
+    end
+  end
+
+  def get_next_code(l)
+    code = rand(28)+1
+    return get_next_code(l) if (@client1_codes.include?(code) || @client2_codes.include?(code) )
+    l << code
+  end
+
+  def get_poke(code)
+    PokeCode[code].to_s
+  end
+
+  def to_s
+    s = 'client1 poke : '
+    client1_codes.each do |code|
+      s += get_poke(code) +' '
+    end
+    s += "\nclient2 poke : "
+    client2_codes.each do |code|
+      s += get_poke(code) +' '
+    end
+    s
+  end
+
+  attr_accessor :client1_codes, :client2_codes
+
+end
+
+DESKTOP_ID_SEQ = 1
+
+def get_desk_id_seq; DESKTOP_ID_SEQ += 1; end
+# ### 桌子结构 Desk
+#
+class Desk
+  def initialize(*args)
+    @poke    = Poke.new
+    @sockets = args
+    @id      = get_desk_id_seq
+  end
+
+  def reset
+    @poke.reset
+  end
+
+  attr_reader :id
+  attr_accessor :poke, :sockets
+end
 
 # ### 状态 STATUS
 # 
@@ -184,7 +278,7 @@ module Message
 #     字段名              类型  长度   备注
 #     Client_Count        BYTE         客户端个数,一般为2
 #     YOU_CLIENT_ID       BYTE         你的CLIENT_ID
-#     SHOW_CLINET_ID      BYTE         本次该谁出牌
+#     SHOW_CLIENT_ID      BYTE         本次该谁出牌
 #     DESKTOP_MONEY       INT          桌子上押的金额
 #     Client1_ID          BYTE         客户端1的ID
 #     Client1_HIDE_POKER  BYTE         参见牌定义，第一次下且对应client_id才有值
@@ -197,7 +291,7 @@ module Message
     Header :header
     uchar:client_count
     uchar:you_client_id     
-    uchar:show_clinet_id    
+    uchar:show_client_id    
     uint32:desktop_money   
     
     class PushPokeClient <CStruct
@@ -272,3 +366,9 @@ module Message
   end
 end
 
+if __FILE__ == $0
+  poke = Message::Poke.new
+  p poke.client1_codes
+  p poke.client2_codes
+  puts poke.to_s
+end
