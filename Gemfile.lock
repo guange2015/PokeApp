@@ -1,0 +1,10 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    cstruct (1.0.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  cstruct (= 1.0.0)
