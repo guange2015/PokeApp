@@ -5,13 +5,16 @@ require 'message'
 
 class MyProcess
 
+	ROBOT_ID  = 2
+	CLIENT_ID = 1
+
 	# 接收一个消息体
     # @param [client] 线程socket
     # @param [class_type] 需要返回的类
     # @return 根据class_type将接收的数据实例化为相应的类
-	def self.recv(client,class_type)
+	def recv(class_type)
 		content = ''
-		while (s = client.recv(class_type.size)).length > 0
+		while (s = @client.recv(class_type.size)).length > 0
 			content += s
 			break if content.length >= class_type.size
 		end
@@ -33,11 +36,43 @@ class MyProcess
 		@client = client
 		msg_login_rep = login
 
+		while poking; end
+	end
+
+	def poking
 		#这里应该确定双方，才进行发牌
 		@desk ||= Message::Desk.new(client,get_another_client)
 		@desk.reset #重新取牌 
 
-		push_poke(1)
+		seq = 1             ##第几张牌
+		doit_p = nil          ##这里要比牌面
+		now_fllow_money = 5 ##根注大小
+
+		4.times {
+			push_poke(seq)
+			
+			doit_p = win_last(seq)
+			# 两种情况
+			# 1. 先由robot出牌,广播打牌消息
+			# 2. 先由client出牌,接收client打牌消息
+			2.times { 
+				if doit_p 
+					#robot只跟
+					boradcast_status(now_fllow_money)
+					doit_p = !doit_p
+				else 			
+					msg_push_status = push_status
+					#client取消跟注
+					break if msg_push_status.rep_status & 0x2 					
+					doit_p = !doit_p
+				end
+			}
+
+			seq += 1
+		}
+
+		#处理结果
+		@desk.win
 	end
 
 	def initialize
@@ -45,8 +80,16 @@ class MyProcess
 		@client = nil
 	end
 
+	def create_error_msg(command_id, status)
+		Message::Error.new {|m|
+				m.header.command_id   = command_id
+				m.header.status       = status
+				m.header.total_length = Message::LoginRep.size
+			}
+	end
+
 	def login
-		msg_login     = MyProcess.recv(@client,Message::Login)
+		msg_login     = recv(Message::Login)
 		msg_login_rep = nil
 		if msg_login.header.command_id == Message::Command_ID::WIN_LOGIN \
 		&& msg_login.imei.to_cstr.length == 15
@@ -60,11 +103,8 @@ class MyProcess
 				m.header.total_length = Message::LoginRep.size
 			}
 		else
-			msg_login_rep = Message::Error.new {|m|
-				m.header.command_id   = Message::Command_ID::WIN_ERROR
-				m.header.status       = Message::ErrorCode::ARGMENTFAIL
-				m.header.total_length = Message::LoginRep.size
-			}
+			msg_login_rep = create_error_msg(Message::Command_ID::WIN_ERROR,
+											 Message::ErrorCode::ARGMENTFAIL )
 		end
 
 		@client.send(msg_login_rep.data,0)
@@ -88,12 +128,41 @@ class MyProcess
 			m.client[0].poker_code = @desk.poke.client1_codes[seq]
 		} 
 		@client.send(msg_push_poke.data,0)
+
+		msg_push_poke_rep = recv(Message::PushPokeRep)
+		p msg_push_poke_rep.data
 	end
 
-	def self.push_status(msg_push_status)
+	###   接收打牌状态
+	def push_status()
+		msg_push_status     = recv(Message::PushStatus)
+		msg_push_status_rep = Message::PushStatusRep.new {|m|
+			m.header.command_id   = Message::Command_ID::WIN_PUSH_STATUS_REP
+			m.header.status       = 0
+			m.header.total_length = Message::PushPoke.size
+
+			m.client_id  = 1
+		}		
+		
+		@client.send(msg_push_status_rep.data,0)
+		msg_push_status 	
 	end
 
-	def self.boradcast_status(msg_boradcast_status)
+    ###   广播打牌状态
+	def boradcast_status(now_fllow_money)
+		msg_boradcast_status = Message::BroadcastStatus.new {|m|
+			m.header.command_id   = Message::Command_ID::WIN_BROADCAST_STATUS
+			m.header.status       = 0
+			m.header.total_length = Message::PushPoke.size
+
+			m.client_id  = ROBOT_ID
+			m.rep_status = 0x2
+			m.money = now_fllow_money
+		}	
+		@client.send(msg_boradcast_status.data,0)
+
+		msg_boradcast_status_rep = recv(Message::BroadcastStatusRep)
+		p msg_boradcast_status_rep.data
 	end
 end
 

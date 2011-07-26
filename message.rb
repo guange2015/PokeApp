@@ -1,7 +1,6 @@
 # coding=utf-8
 require 'cstruct'
 
-
 $desktop_id = 1
 
 def get_desk_id_seq; $desktop_id += 1; end
@@ -53,7 +52,7 @@ def get_desk_id_seq; $desktop_id += 1; end
 #
 # {include:Message::Poke}
 #
-# {include:Message:ErrorCode}
+# {include:Message::ErrorCode}
 #
 #
 # 消息交互
@@ -77,6 +76,10 @@ def get_desk_id_seq; $desktop_id += 1; end
 #
 # {include:Message::BroadcastStatusRep}
 #
+# {include:Message::Result}
+#
+# {include:Message::ResultRep}
+#
 module Message
 
 # ### 消息类型(Command_ID):
@@ -90,6 +93,8 @@ module Message
 #     回应跟注状态      WIN_PUSH_STATUS_REP       0x803
 #     广播跟注状态      WIN_BROADCAST_STATUS      0x4
 #     回应广播跟注状态  WIN_BROADCAST_STATUS_REP  0x804
+#     下发输赢结果      WIN_RESULT                0x5
+#     回应下发输赢结果  WIN_RESULT_REP            0x805
 #     统一出错处理      WIN_ERROR                 0x9
 #
   class Command_ID
@@ -185,23 +190,6 @@ class Poke
 
 end
 
-
-# ### 桌子结构 Desk
-#
-class Desk
-  def initialize(*args)
-    @poke    = Poke.new
-    @sockets = args
-    @id      = get_desk_id_seq
-  end
-
-  def reset
-    @poke.reset
-  end
-
-  attr_reader :id
-  attr_accessor :poke, :sockets
-end
 
 # ### 状态 STATUS
 # 
@@ -347,14 +335,12 @@ end
 #     Client_ID        BYTE    
 #     Rep_Status       BYTE         跟注状态
 #     Money            INT          跟多少金额，主要是为了获取加注数
-#     CAN_Rep_Status   BYTE         当前能够使用的状态
   class BroadcastStatus < CStruct
     options :endian => :big
     Header :header
     uchar:client_id     
     uchar:rep_status    
     uint32:money         
-    uchar:can_rep_status
   end
 
 ## ### 回应广播跟注状态(客户端->服务器)
@@ -366,7 +352,32 @@ end
     Header :header
     uchar  :client_id
   end
+
+## ### 下发输赢结果(服务器->客户端)
+# 
+#     字段名           类型  长度   备注
+#     Win_Client_ID    BYTE         赢的人ID
+#     Win_Money        INT          赢了多少钱
+#     这里可能还要增加一些帐户统计，比如谁输了多少之类
+  class Result < CStruct
+    options :endian => :big
+    Header :header
+    uchar:win_client_id     
+    uint32:win_money 
+  end
+
+## ### 回应输赢结果(客户端->服务器)
+# 
+#     字段名           类型  长度  备注
+#     Client_ID        BYTE        回复你的ID
+  class ResultRep < CStruct
+    options :endian => :big
+    Header :header
+    uchar  :client_id
+  end
+
 end
+
 
 if __FILE__ == $0  
   p get_desk_id_seq()
