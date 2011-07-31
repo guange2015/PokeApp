@@ -3,31 +3,6 @@ $LOAD_PATH <<  File.expand_path('../',__FILE__)
 
 require 'message'
 
-# ### 桌子结构 Desk
-#
-class Desk
-  def initialize(*args)
-    @poke    = Poke.new
-    @sockets = args
-    @id      = get_desk_id_seq
-  end
-
-  def reset
-    @poke.reset
-  end
-  
-  #比最后一张牌大小，用来确定该谁说话
-  def win_last(seq)
-  	@poke.client1_codes[seq] > @poke.client2_codes[seq]
-  end
-
-  def win
-  end
-
-  attr_reader :id
-  attr_accessor :poke, :sockets
-end
-
 # 牌桌管理
 #
 class DesksManager
