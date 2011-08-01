@@ -44,43 +44,29 @@ module Message
       28 => :DA
     }
 
-    
-    def initialize()
-      @client1_codes = []    
-      @client2_codes = []   
-      reset
+    Types = {
+      :tonghua => 1,
+    }    
+    def initialize()           
+      @deals = []
     end
 
-    def reset
-      5.times do |n|
-         get_next_code(@client1_codes)
-         get_next_code(@client2_codes)
-      end
+    def shuffle
+      @deals.clear
     end
 
-    def get_next_code(l)
+    def deal()
+      return nil unless @deals.size < PokeCode.size
       code = rand(28)+1
-      return get_next_code(l) if (@client1_codes.include?(code) || @client2_codes.include?(code) )
-      l << code
+      return deal() if @deals.include? code 
+      @deals << code
+      code
     end
 
-    def get_poke(code)
-      PokeCode[code].to_s
+    def check(*args)
+
     end
 
-    def to_s
-      s = 'client1 poke : '
-      client1_codes.each do |code|
-        s += get_poke(code) +' '
-      end
-      s += "\nclient2 poke : "
-      client2_codes.each do |code|
-        s += get_poke(code) +' '
-      end
-      s
-    end
-
-    attr_accessor :client1_codes, :client2_codes
   end
 
 end

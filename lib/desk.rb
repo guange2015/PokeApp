@@ -14,12 +14,18 @@ class Desk
   # 桌子号
   # 客户端
   def initialize(*args)
-    @id      = get_desk_id_seq
-    @clients = []
+    @id      ||= Desk.get_desk_id_seq
+    @poke = Message::Poke.new
+    @clients ||= []
+    @clients << Client.new
+    @clients << Client.new(:robot=>true)
   end
 
-  def reset
-    @poke.reset
+  def deal
+    @poke.shuffle
+    @clients.each do |client|
+      5.times {client.deal(@poke.deal)}
+    end
   end
   
   #比最后一张牌大小，用来确定该谁说话
@@ -31,5 +37,5 @@ class Desk
   end
 
   attr_reader :id
-  attr_accessor :poke, :sockets
+  attr_reader :clients
 end

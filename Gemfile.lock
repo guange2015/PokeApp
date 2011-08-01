@@ -2,9 +2,23 @@ GEM
   remote: http://rubygems.org/
   specs:
     cstruct (1.0.0)
+    diff-lcs (1.1.2)
+    rdiscount (1.6.8)
+    rspec (2.6.0)
+      rspec-core (~> 2.6.0)
+      rspec-expectations (~> 2.6.0)
+      rspec-mocks (~> 2.6.0)
+    rspec-core (2.6.4)
+    rspec-expectations (2.6.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.6.0)
+    yard (0.7.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   cstruct (= 1.0.0)
+  rdiscount (>= 1.6.8)
+  rspec
+  yard (>= 0.7.2)
