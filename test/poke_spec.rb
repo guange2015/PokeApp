@@ -34,5 +34,29 @@ describe Message::Poke do
     check(1,8,15,22,3).should be_tiezhi
   end
 
+  it "葫芦" do
+    check(1,8,15,5,12).should be_hulu
+  end
 
+  it "同花" do
+    check(1,3,4,5,7).should_not be_tonghuashun
+    check(1,3,4,5,7).should be_tonghua
+  end
+
+  it "顺子" do
+    check(1,16,17,25,5).should be_shunzi
+  end
+
+  it '三条' do
+  end
+
+  it '两对' do
+  end
+
+  it '对子' do
+  end
+
+  it '散牌' do
+  end
+  
 end
