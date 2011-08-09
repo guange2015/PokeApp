@@ -27,36 +27,55 @@ describe Message::Poke do
   end
 
   it "同花顺" do
-    check(10,11,12,13,14).should be_tonghuashun
+    Message::Poke.should be_tonghuashun(10,11,12,13,14)
   end
 
   it "铁支" do
-    check(1,8,15,22,3).should be_tiezhi
+    Message::Poke.should be_tiezhi(1,8,15,22,3)
   end
 
   it "葫芦" do
-    check(1,8,15,5,12).should be_hulu
+    Message::Poke.should be_hulu(1,8,15,5,12) 
   end
 
   it "同花" do
-    check(1,3,4,5,7).should_not be_tonghuashun
-    check(1,3,4,5,7).should be_tonghua
+    Message::Poke.should_not be_tonghuashun(1,3,4,5,7)
+    Message::Poke.should be_tonghua(1,3,4,5,7)
   end
 
   it "顺子" do
-    check(1,16,17,25,5).should be_shunzi
+    Message::Poke.should be_shunzi(1,16,17,25,5)
+    Message::Poke.should_not be_tonghuashun(1,16,17,25,5)
   end
 
   it '三条' do
+    Message::Poke.should be_santiao(1,8,15,2,3)
+    Message::Poke.should_not be_hulu(1,8,15,2,3)
   end
 
   it '两对' do
+    Message::Poke.should be_liangdui(1,8,9,2,3)
   end
 
   it '对子' do
+    Message::Poke.should be_duizi(27,28,15,2,9)
+    Message::Poke.should_not be_liangdui(27,28,15,2,9)
+    Message::Poke.should_not be_santiao(27,28,15,2,9)
   end
 
   it '散牌' do
+    Message::Poke.should be_sanpai(27,28,15,16,3)
+  end
+
+  it '牌型不同比较' do
+    Message::Poke.compare([10,11,12,13,14],[1,3,4,5,7]).should be_true
+    Message::Poke.compare([27,28,15,2,9],[27,28,15,2,8]).should be_true
+  end
+
+
+  it '比一张牌' do
+    Message::Poke.compare_one(7,14).should be_false
+    Message::Poke.compare_one(7,26).should be_true
   end
   
 end
